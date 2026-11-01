@@ -4,7 +4,8 @@ import sys
 from converter import ansi_to_unicode as a2u, unicode_to_ansi as u2a, _compose
 
 sys.stdout.reconfigure(encoding="utf-8")
-words = [w for line in open("test_words.txt", encoding="utf-8") for w in line.split()]
+words = [w for f in ("test_words.txt", "test_conjuncts.txt")
+         for line in open(f, encoding="utf-8") for w in line.split()]
 failed = 0
 for enc in ("AdarshaLipi", "Bijoy"):
     bad = 0

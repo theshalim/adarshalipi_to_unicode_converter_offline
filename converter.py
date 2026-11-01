@@ -35,8 +35,9 @@ ALIPI_MAP = {
     "u": "য়", "v": "ৎ", "w": "ং", "x": "ঃ", "y": "ঁ",
     # vowel signs (several glyph variants each)
     "\xa1": "া", "\xa2": PRE_I, "\xa3": "ী", "\xb1": "ী",
-    "\xa4": "ু", "\xa5": "ু", "\xa6": "ু", "\xa9": "ু",
-    "\xa7": "ূ", "\xa8": "ূ", "\xaa": "ৃ", "\xab": "ৃ",
+    "\xa4": "ু", "\xa5": "ু", "\xa6": "ু",  # \xa6 is the ু shaped for র (রু)
+    "\xa7": "ূ", "\xa8": "ূ", "\xa9": "ূ",  # \xa9 is the ূ shaped for র (রূ)
+    "\xaa": "ৃ", "\xab": "ৃ",
     "\xad": PRE_E, "\xae": PRE_E, "\xaf": PRE_OI, "\xb0": PRE_OI,
     "\x7e": "ৗ",
     # half forms (first part of a conjunct, written before the consonant)
@@ -256,12 +257,12 @@ ADARSHALIPI = Encoding(
     sign={"া": "\xa1", "ী": "\xa3", "ু": "\xa4", "ূ": "\xa7", "ৃ": "\xaa", "ৗ": "\x7e",
           "ং": "w", "ঃ": "x", "ঁ": "y"},
     hasanta="\xda", reph="\xd1",
-    special={"শ্রু": "Š", "শু": "\xf6", "হু": "\xfd", "গু": "…"},
+    special={"শ্রু": "Š", "শু": "\xf6", "হু": "\xfd", "গু": "…", "রু": "l\xa6", "রূ": "l\xa9"},
     # ন্ত/স্ত join properly with the below-base ত (\xba, \xbb for ত্র); the \xbe ন্ and
     # \xb4 ঙ্ half forms connect better than the first variants in the table. The
     # below-base ত collides with ক's bowl at text sizes, so ক্ত is written with a hasanta.
     extra_full={"ন্ত": "e\xba", "স্ত": "p\xba", "ন্ত্র": "e\xbb", "স্ত্র": "p\xbb",
-                "ক্ত": "L\xdaa", "ন্": "\xbe", "ঙ্": "\xb4"},
+                "ক্ত": "L\xdaa", "ঙ্ক্ষ": "\xb4r", "ন্": "\xbe", "ঙ্": "\xb4"},
     # the font has no double quote or bullet: those codes are conjuncts
     letters={"“": "\x22\x22", "”": "\x27\x27", "•": "*"},
     au_prefix="\xa1",  # ৗ is drawn as া plus a top curl
@@ -275,7 +276,7 @@ BIJOY = Encoding(
     hasanta="&", reph="\xa9",
     special={"ন্তু": "š‘", "স্তু": "\xaf‘", "গু": "\xb8", "শু": "\xef",
              "হু": "\xfb", "হৃ": "\xfc", "রু": "i\xe6", "রূ": "iƒ"},
-    extra_full={"ন্ত": "š—", "স্ত": "\xaf\xcd", "ন্ত্র": "š\xbf",
+    extra_full={"ন্ত": "š\xcd", "স্ত": "\xaf\xcd", "ন্ত্র": "š\xbf",
                 "স্ত্র": "\xaf\xbf", "ন্থ": "š’", "স্থ": "\xaf’",
                 "ম্প": "\xa4\xfa", "স্প": "\xaf\xfa", "ষ্প": "\xae\xfa",
                 "স্ক": "\xaf‹", "ষ্ক": "\xae‹", "স্ক্র": "\xafŒ",
