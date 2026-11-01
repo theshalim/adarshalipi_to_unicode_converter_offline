@@ -18,17 +18,18 @@ MIN_BUSY_SECONDS = 1.6          # keep the progress card up long enough to be se
 ANSI_FONTS = {"AdarshaLipi": ["AdarshaLipiExp", "AdarshaLipiCon"],
               "Bijoy": ["SutonnyMJ", "SutonnyOMJ", "BijoyMJ"]}
 
-# palette
-BG = "#F5F6F8"
+# palette: #2C3E50 · #34495E · #7F8C8D · #BDC3C7 · #ECF0F1 (plus light tints of them)
+BG = "#ECF0F1"
 SURFACE = "#FFFFFF"
-BORDER = "#E4E7EB"
-TEXT = "#111827"
-MUTED = "#6B7280"
-ACCENT = "#15803D"
-ACCENT_DARK = "#166534"
-ACCENT_SOFT = "#ECFDF3"
-PILL = "#EEF0F3"
-HOVER = "#F1F3F5"
+BORDER = "#D5DBDE"
+TEXT = "#2C3E50"
+MUTED = "#7F8C8D"
+ACCENT = "#34495E"
+ACCENT_DARK = "#2C3E50"
+ACCENT_SOFT = "#ECF0F1"
+PILL = "#DFE4E6"
+HOVER = "#F2F4F5"
+SELECT = "#BDC3C7"
 UI = "Segoe UI"
 
 
@@ -114,30 +115,41 @@ class Button(tk.Canvas):
         self.create_text(w / 2, h / 2, text=self.text, fill=self.fg, font=self.font)
 
 
-class ArrowButton(tk.Canvas):
-    """Square icon button with a ▶ or ◀ arrow. kind: primary (filled) or outline."""
+class ConvertButton(tk.Canvas):
+    """Rounded convert button: a long → or ← arrow with its label underneath.
+    kind: primary (filled) or outline."""
 
     def __init__(self, parent, direction, command, kind="primary", s=1.0):
-        self.d = int(58 * s)
-        super().__init__(parent, width=self.d, height=self.d, bg=parent.cget("bg"),
+        self.w, self.h = int(132 * s), int(78 * s)
+        super().__init__(parent, width=self.w, height=self.h, bg=parent.cget("bg"),
                          highlightthickness=0, cursor="hand2")
-        self.direction, self.command, self.kind, self.s = direction, command, kind, s
+        self.direction, self.command, self.kind, self.s, self.text = direction, command, kind, s, ""
+        self.hot = False
         self.bind("<Enter>", lambda e: self.draw(True))
         self.bind("<Leave>", lambda e: self.draw(False))
         self.bind("<Button-1>", lambda e: self.command())
-        self.draw(False)
+        self.draw()
 
-    def draw(self, hot):
+    def set_text(self, text):
+        self.text = text
+        self.draw()
+
+    def draw(self, hot=None):
+        if hot is not None:
+            self.hot = hot
         self.delete("all")
-        d, s, w = self.d, self.s, max(2, int(2 * self.s))
+        w, h, s, lw = self.w, self.h, self.s, max(2, int(1.5 * self.s))
         if self.kind == "primary":
-            fill, line, arrow = (ACCENT_DARK if hot else ACCENT), ACCENT_DARK, "#FFFFFF"
+            fill, line, fg = (ACCENT_DARK if self.hot else ACCENT), ACCENT_DARK, "#FFFFFF"
         else:
-            fill, line, arrow = (ACCENT_SOFT if hot else SURFACE), ACCENT, ACCENT
-        rounded(self, w, w, d - w, d - w, int(14 * s), fill=fill, outline=line, width=w)
-        a, b, c = d * .38, d * .30, d * .66
-        pts = (a, b, a, d - b, c, d / 2) if self.direction == "right" else (d - a, b, d - a, d - b, d - c, d / 2)
-        self.create_polygon(pts, fill=arrow, outline=arrow, joinstyle="round", width=int(3 * s))
+            fill, line, fg = (HOVER if self.hot else SURFACE), ACCENT, ACCENT
+        rounded(self, lw, lw, w - lw, h - lw, int(12 * s), fill=fill, outline=line, width=lw)
+        y, x1, x2 = h * .34, w * .30, w * .70
+        self.create_line(x1, y, x2, y, fill=fg, width=max(2, int(2.5 * s)), capstyle="round",
+                         arrow="last" if self.direction == "right" else "first",
+                         arrowshape=(int(11 * s), int(11 * s), int(5 * s)))
+        self.create_text(w / 2, h * .70, text=self.text, fill=fg, font=(UI, 8, "bold"),
+                         justify="center")
 
 
 class Segmented(tk.Canvas):
@@ -331,17 +343,15 @@ class App:
         cards.rowconfigure(0, weight=1)
         self.ansi = self._card(cards, 0, self.fonts["AdarshaLipi"], "ansi")
         self.uni = self._card(cards, 2, self.uni_family, "uni")
-        middle = tk.Frame(cards, bg=BG, width=int(112 * s))
+        middle = tk.Frame(cards, bg=BG, width=int(160 * s))
         middle.grid(row=0, column=1, sticky="ns")
         middle.grid_propagate(False)
         stack = tk.Frame(middle, bg=BG)
         stack.place(relx=.5, rely=.5, anchor="center")
-        ArrowButton(stack, "right", self.to_unicode, "primary", s=s).pack()
-        self.cap_uni = tk.Label(stack, font=(UI, 8, "bold"), bg=BG, fg=ACCENT, justify="center")
-        self.cap_uni.pack(pady=(int(4 * s), int(22 * s)))
-        ArrowButton(stack, "left", self.to_ansi, "outline", s=s).pack()
-        self.cap_ansi = tk.Label(stack, font=(UI, 8, "bold"), bg=BG, fg=ACCENT, justify="center")
-        self.cap_ansi.pack(pady=(int(4 * s), 0))
+        self.btn_uni = ConvertButton(stack, "right", self.to_unicode, "primary", s=s)
+        self.btn_uni.pack(pady=(0, int(14 * s)))
+        self.btn_ansi = ConvertButton(stack, "left", self.to_ansi, "outline", s=s)
+        self.btn_ansi.pack()
         self.uni.label.configure(text="Unicode")
         self.uni.hint.configure(text="Works everywhere: Facebook, Google, email")
 
@@ -371,7 +381,7 @@ class App:
         box.pack(fill="both", expand=True)
         txt = tk.Text(box, wrap="word", undo=True, height=6, width=20, font=(family, self.size),
                       relief="flat", bd=0, padx=int(16 * s), pady=int(12 * s), bg=SURFACE, fg=TEXT,
-                      insertbackground=ACCENT, selectbackground="#BBF7D0", selectforeground=TEXT,
+                      insertbackground=ACCENT, selectbackground=SELECT, selectforeground=TEXT,
                       highlightthickness=0, spacing1=2, spacing3=2)
         sb = tk.Scrollbar(box, command=txt.yview, relief="flat", width=int(12 * s))
         txt.configure(yscrollcommand=sb.set)
@@ -404,8 +414,8 @@ class App:
                                      fg="#B45309")
         else:
             self.ansi.hint.configure(text=f"Old {enc} font text", fg=MUTED)
-        self.cap_uni.configure(text=f"{enc}\n→ Unicode")
-        self.cap_ansi.configure(text=f"Unicode\n→ {enc}")
+        self.btn_uni.set_text(f"{enc}\nto Unicode")
+        self.btn_ansi.set_text(f"Unicode\nto {enc}")
 
     # ------------------------------------------------------------- text actions
     def to_unicode(self):
