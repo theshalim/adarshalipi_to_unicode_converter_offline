@@ -1,0 +1,18 @@
+# build output
+build/
+dist/
+*.spec
+build.log
+__pycache__/
+
+# fonts are not redistributed (licensing) — install them on your PC instead
+*.ttf
+*.TTF
+*.otf
+
+# local test output and private samples
+testdocs/
+out_*.txt
+ansi_out.txt
+bijoy_sample.txt
+icon_old.*
