@@ -45,10 +45,10 @@ ALIPI_MAP = {
     "\xc3": "প্", "\xc7": "ম্", "\xd2": "ল্", "\xd5": "শ্",
     "\xd6": "ষ্", "\xd7": "ষ্", "\xd8": "স্", "\xd9": "স্",
     # below-base forms (second part of a conjunct, written after the consonant)
-    "\xb9": "্ত", "\xba": "্ত", "\xd0": "্ত", "\xbb": "্ত্র",
+    "\xb9": "্ত", "\xba": "্ত", "\xbb": "্ত্র",
     "\xbc": "্দ", "\xbd": "্ধ", "\xc0": "্ন", "\xc1": "্ন", "\xc8": "্ম",
     "\xc4": "্ব", "\xc5": "্ব", "\xc6": "্ব", "\xc9": "্য",
-    "\xca": "্র", "\xcb": "্র", "\xcc": "্র", "\xd3": "্ল", "\xd4": "্ল",
+    "\xca": "্র", "\xcb": "্র", "\xcc": "্র", "\xd0": "্র", "\xd3": "্ল", "\xd4": "্ল",
     "\xdb": "্ষ", "\xda": "্", "\xd1": REPH,
     # complete conjuncts
     "\xdc": "দ্ধ", "\xde": "দ্ধ্ব", "\xe0": "দ্ব", "\xe1": "দ্ভ", "\xe2": "দ্র",
@@ -223,6 +223,10 @@ class Encoding:
                 break
         if body is None:
             body = self._cluster(cl)
+        if pre and self.hasanta in body:
+            # a visible hasanta splits the cluster, so ি/ে/ৈ belong before its last letter
+            cut = body.rfind(self.hasanta) + 1
+            body, pre = body[:cut] + pre + body[cut:], ""
         post = "".join((self.au_prefix if s == "ৗ" else "") + self.sign.get(s, s)
                        for s in post_signs)
         return pre + body + (self.reph if reph else "") + post
@@ -254,9 +258,10 @@ ADARSHALIPI = Encoding(
     hasanta="\xda", reph="\xd1",
     special={"শ্রু": "Š", "শু": "\xf6", "হু": "\xfd", "গু": "…"},
     # ন্ত/স্ত join properly with the below-base ত (\xba, \xbb for ত্র); the \xbe ন্ and
-    # \xb4 ঙ্ half forms connect better than the first variants in the table
+    # \xb4 ঙ্ half forms connect better than the first variants in the table. The
+    # below-base ত collides with ক's bowl at text sizes, so ক্ত is written with a hasanta.
     extra_full={"ন্ত": "e\xba", "স্ত": "p\xba", "ন্ত্র": "e\xbb", "স্ত্র": "p\xbb",
-                "ন্": "\xbe", "ঙ্": "\xb4"},
+                "ক্ত": "L\xdaa", "ন্": "\xbe", "ঙ্": "\xb4"},
     # the font has no double quote or bullet: those codes are conjuncts
     letters={"“": "\x22\x22", "”": "\x27\x27", "•": "*"},
     au_prefix="\xa1",  # ৗ is drawn as া plus a top curl
