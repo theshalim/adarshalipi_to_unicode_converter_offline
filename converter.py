@@ -18,8 +18,8 @@ ALIPI_MAP = {
     # punctuation / symbols that differ from plain ASCII
     "\x22": "‘", "\x27": "’", "\x24": "৳", "\x40": "ঽ",
     "\x5f": "—", "\x60": "÷", "\x7a": "।", "\x7c": ".",
-    # Windows smart quotes (their glyphs are broken in the font)
-    "‘": "‘", "’": "’", "“": "“", "”": "”", "•": "•",
+    # conjuncts on the smart-quote codes (checked in ALIPI_CO.TTF; damaged in some ALIPI_EX.TTF copies)
+    "‘": "জ্ঞ", "’": "ঞ্চ", "“": "ঞ্ছ", "”": "ঞ্জ", "•": "ঞ্ঝ",
     # digits
     "0": "০", "1": "১", "2": "২", "3": "৩", "4": "৪",
     "5": "৫", "6": "৬", "7": "৭", "8": "৮", "9": "৯",
@@ -253,6 +253,12 @@ ADARSHALIPI = Encoding(
           "ং": "w", "ঃ": "x", "ঁ": "y"},
     hasanta="\xda", reph="\xd1",
     special={"শ্রু": "Š", "শু": "\xf6", "হু": "\xfd", "গু": "…"},
+    # ন্ত/স্ত join properly with the below-base ত (\xba, \xbb for ত্র); the \xbe ন্ and
+    # \xb4 ঙ্ half forms connect better than the first variants in the table
+    extra_full={"ন্ত": "e\xba", "স্ত": "p\xba", "ন্ত্র": "e\xbb", "স্ত্র": "p\xbb",
+                "ন্": "\xbe", "ঙ্": "\xb4"},
+    # the font has no double quote or bullet: those codes are conjuncts
+    letters={"“": "\x22\x22", "”": "\x27\x27", "•": "*"},
     au_prefix="\xa1",  # ৗ is drawn as া plus a top curl
 )
 
