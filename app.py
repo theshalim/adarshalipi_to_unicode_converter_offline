@@ -31,6 +31,7 @@ PILL = "#DFE4E6"
 HOVER = "#F2F4F5"
 SELECT = "#BDC3C7"
 UI = "Segoe UI"
+UI_SEMI = "Segoe UI Semibold"
 
 
 def guess_encoding(text):
@@ -78,9 +79,9 @@ class Button(tk.Canvas):
     }
 
     def __init__(self, parent, text, command, kind="ghost", size=10, bold=False,
-                 pad=(16, 8), expand=False, s=1.0):
+                 pad=(14, 7), expand=False, s=1.0):
         self.fill, self.hover, self.fg, self.line, self.line_hover = self.STYLES[kind]
-        self.font = (UI, size, "bold" if bold or kind != "ghost" else "normal")
+        self.font = (UI_SEMI if bold or kind != "ghost" else UI, size)
         self.command, self.text, self.s, self.expand = command, text, s, expand
         f = tkfont.Font(font=self.font)
         self.pad = (int(pad[0] * s), int(pad[1] * s))
@@ -109,18 +110,18 @@ class Button(tk.Canvas):
         w, h = self.winfo_width(), self.winfo_height()
         if w < 4:
             w, h = int(self.cget("width")), int(self.cget("height"))
-        rounded(self, 1, 1, w - 1, h - 1, int(9 * self.s),
+        rounded(self, 1, 1, w - 1, h - 1, int(6 * self.s),
                 fill=self.hover if self.hot else self.fill,
                 outline=self.line_hover if self.hot else self.line)
         self.create_text(w / 2, h / 2, text=self.text, fill=self.fg, font=self.font)
 
 
 class ConvertButton(tk.Canvas):
-    """Rounded convert button: a long → or ← arrow with its label underneath.
+    """Slim convert button: one line of text with a small → (after) or ← (before) arrow.
     kind: primary (filled) or outline."""
 
     def __init__(self, parent, direction, command, kind="primary", s=1.0):
-        self.w, self.h = int(132 * s), int(78 * s)
+        self.w, self.h = int(150 * s), int(36 * s)
         super().__init__(parent, width=self.w, height=self.h, bg=parent.cget("bg"),
                          highlightthickness=0, cursor="hand2")
         self.direction, self.command, self.kind, self.s, self.text = direction, command, kind, s, ""
@@ -138,18 +139,24 @@ class ConvertButton(tk.Canvas):
         if hot is not None:
             self.hot = hot
         self.delete("all")
-        w, h, s, lw = self.w, self.h, self.s, max(2, int(1.5 * self.s))
+        w, h, s = self.w, self.h, self.s
         if self.kind == "primary":
-            fill, line, fg = (ACCENT_DARK if self.hot else ACCENT), ACCENT_DARK, "#FFFFFF"
+            fill, line, fg = (ACCENT_DARK if self.hot else ACCENT), (ACCENT_DARK if self.hot else ACCENT), "#FFFFFF"
         else:
             fill, line, fg = (HOVER if self.hot else SURFACE), ACCENT, ACCENT
-        rounded(self, lw, lw, w - lw, h - lw, int(12 * s), fill=fill, outline=line, width=lw)
-        y, x1, x2 = h * .34, w * .30, w * .70
-        self.create_line(x1, y, x2, y, fill=fg, width=max(2, int(2.5 * s)), capstyle="round",
-                         arrow="last" if self.direction == "right" else "first",
-                         arrowshape=(int(11 * s), int(11 * s), int(5 * s)))
-        self.create_text(w / 2, h * .70, text=self.text, fill=fg, font=(UI, 8, "bold"),
-                         justify="center")
+        rounded(self, 1, 1, w - 1, h - 1, int(6 * s), fill=fill, outline=line)
+        font = (UI_SEMI, 9)
+        tw, aw, gap = tkfont.Font(font=font).measure(self.text), int(14 * s), int(8 * s)
+        x0, y = (w - tw - gap - aw) / 2, h / 2
+        if self.direction == "right":   # "To Unicode  →"
+            self.create_text(x0, y, text=self.text, fill=fg, font=font, anchor="w")
+            ax = x0 + tw + gap
+            self.create_line(ax, y, ax + aw, y, fill=fg, width=max(1, int(1.5 * s)),
+                             arrow="last", arrowshape=(int(6 * s), int(6 * s), int(3 * s)))
+        else:                           # "←  To AdarshaLipi"
+            self.create_line(x0, y, x0 + aw, y, fill=fg, width=max(1, int(1.5 * s)),
+                             arrow="first", arrowshape=(int(6 * s), int(6 * s), int(3 * s)))
+            self.create_text(x0 + aw + gap, y, text=self.text, fill=fg, font=font, anchor="w")
 
 
 class Segmented(tk.Canvas):
@@ -157,7 +164,7 @@ class Segmented(tk.Canvas):
 
     def __init__(self, parent, options, variable, command, s=1.0):
         self.options, self.var, self.command, self.s = options, variable, command, s
-        self.font = (UI, 10, "bold")
+        self.font = (UI_SEMI, 10)
         f = tkfont.Font(font=self.font)
         self.seg_w = max(f.measure(o) for o in options) + int(36 * s)
         self.h = f.metrics("linespace") + int(18 * s)
@@ -343,13 +350,13 @@ class App:
         cards.rowconfigure(0, weight=1)
         self.ansi = self._card(cards, 0, self.fonts["AdarshaLipi"], "ansi")
         self.uni = self._card(cards, 2, self.uni_family, "uni")
-        middle = tk.Frame(cards, bg=BG, width=int(160 * s))
+        middle = tk.Frame(cards, bg=BG, width=int(184 * s))
         middle.grid(row=0, column=1, sticky="ns")
         middle.grid_propagate(False)
         stack = tk.Frame(middle, bg=BG)
         stack.place(relx=.5, rely=.5, anchor="center")
         self.btn_uni = ConvertButton(stack, "right", self.to_unicode, "primary", s=s)
-        self.btn_uni.pack(pady=(0, int(14 * s)))
+        self.btn_uni.pack(pady=(0, int(10 * s)))
         self.btn_ansi = ConvertButton(stack, "left", self.to_ansi, "outline", s=s)
         self.btn_ansi.pack()
         self.uni.label.configure(text="Unicode")
@@ -414,8 +421,8 @@ class App:
                                      fg="#B45309")
         else:
             self.ansi.hint.configure(text=f"Old {enc} font text", fg=MUTED)
-        self.btn_uni.set_text(f"{enc}\nto Unicode")
-        self.btn_ansi.set_text(f"Unicode\nto {enc}")
+        self.btn_uni.set_text("To Unicode")
+        self.btn_ansi.set_text(f"To {enc}")
 
     # ------------------------------------------------------------- text actions
     def to_unicode(self):
