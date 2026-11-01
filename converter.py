@@ -262,7 +262,9 @@ ADARSHALIPI = Encoding(
     # \xb4 ঙ্ half forms connect better than the first variants in the table. The
     # below-base ত collides with ক's bowl at text sizes, so ক্ত is written with a hasanta.
     extra_full={"ন্ত": "e\xba", "স্ত": "p\xba", "ন্ত্র": "e\xbb", "স্ত্র": "p\xbb",
-                "ক্ত": "L\xdaa", "ঙ্ক্ষ": "\xb4r", "ন্": "\xbe", "ঙ্": "\xb4"},
+                "ক্ত": "L\xdaa", "ঙ্ক্ষ": "\xb4r", "ন্": "\xbe", "ঙ্": "\xb4",
+                # no স্থ glyph: স্ half + থ reads as "সিথ" next to ি, a hasanta reads right
+                "স্থ": "p\xdab"},
     # the font has no double quote or bullet: those codes are conjuncts
     letters={"“": "\x22\x22", "”": "\x27\x27", "•": "*"},
     au_prefix="\xa1",  # ৗ is drawn as া plus a top curl

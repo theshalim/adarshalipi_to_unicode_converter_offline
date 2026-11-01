@@ -114,6 +114,32 @@ class Button(tk.Canvas):
         self.create_text(w / 2, h / 2, text=self.text, fill=self.fg, font=self.font)
 
 
+class ArrowButton(tk.Canvas):
+    """Square icon button with a ▶ or ◀ arrow. kind: primary (filled) or outline."""
+
+    def __init__(self, parent, direction, command, kind="primary", s=1.0):
+        self.d = int(58 * s)
+        super().__init__(parent, width=self.d, height=self.d, bg=parent.cget("bg"),
+                         highlightthickness=0, cursor="hand2")
+        self.direction, self.command, self.kind, self.s = direction, command, kind, s
+        self.bind("<Enter>", lambda e: self.draw(True))
+        self.bind("<Leave>", lambda e: self.draw(False))
+        self.bind("<Button-1>", lambda e: self.command())
+        self.draw(False)
+
+    def draw(self, hot):
+        self.delete("all")
+        d, s, w = self.d, self.s, max(2, int(2 * self.s))
+        if self.kind == "primary":
+            fill, line, arrow = (ACCENT_DARK if hot else ACCENT), ACCENT_DARK, "#FFFFFF"
+        else:
+            fill, line, arrow = (ACCENT_SOFT if hot else SURFACE), ACCENT, ACCENT
+        rounded(self, w, w, d - w, d - w, int(14 * s), fill=fill, outline=line, width=w)
+        a, b, c = d * .38, d * .30, d * .66
+        pts = (a, b, a, d - b, c, d / 2) if self.direction == "right" else (d - a, b, d - a, d - b, d - c, d / 2)
+        self.create_polygon(pts, fill=arrow, outline=arrow, joinstyle="round", width=int(3 * s))
+
+
 class Segmented(tk.Canvas):
     """Pill-shaped two-option switch."""
 
@@ -291,44 +317,44 @@ class App:
         self.size_label.pack(side="left")
         Button(zoom, "+", lambda: self.zoom(2), s=s, pad=(12, 6)).pack(side="left")
 
-        # bottom: status + convert buttons (packed before the cards so they stay visible)
+        # bottom: status line (packed before the cards so it stays visible)
         foot = tk.Frame(root, bg=BG, padx=int(24 * s))
-        foot.pack(side="bottom", fill="x", pady=(0, int(12 * s)))
+        foot.pack(side="bottom", fill="x", pady=(int(8 * s), int(12 * s)))
         self.status = tk.Label(foot, text="", font=(UI, 9), bg=BG, fg=MUTED, anchor="w")
         self.status.pack(fill="x")
-        convert = tk.Frame(root, bg=BG, padx=int(24 * s))
-        convert.pack(side="bottom", fill="x", pady=(int(4 * s), int(8 * s)))
-        convert.columnconfigure(0, weight=1)
-        convert.columnconfigure(1, weight=1)
-        self.btn_uni = Button(convert, "", self.to_unicode, kind="primary", size=11, pad=(16, 11),
-                              expand=True, s=s)
-        self.btn_uni.grid(row=0, column=0, sticky="ew", padx=(0, int(6 * s)))
-        self.btn_ansi = Button(convert, "", self.to_ansi, kind="outline", size=11, pad=(16, 11),
-                               expand=True, s=s)
-        self.btn_ansi.grid(row=0, column=1, sticky="ew", padx=(int(6 * s), 0))
 
-        # text cards
+        # text cards with the convert buttons between them
         cards = tk.Frame(root, bg=BG, padx=int(24 * s))
         cards.pack(fill="both", expand=True)
         cards.columnconfigure(0, weight=1, uniform="c")
-        cards.columnconfigure(1, weight=1, uniform="c")
+        cards.columnconfigure(2, weight=1, uniform="c")
         cards.rowconfigure(0, weight=1)
         self.ansi = self._card(cards, 0, self.fonts["AdarshaLipi"], "ansi")
-        self.uni = self._card(cards, 1, self.uni_family, "uni")
+        self.uni = self._card(cards, 2, self.uni_family, "uni")
+        middle = tk.Frame(cards, bg=BG, width=int(112 * s))
+        middle.grid(row=0, column=1, sticky="ns")
+        middle.grid_propagate(False)
+        stack = tk.Frame(middle, bg=BG)
+        stack.place(relx=.5, rely=.5, anchor="center")
+        ArrowButton(stack, "right", self.to_unicode, "primary", s=s).pack()
+        self.cap_uni = tk.Label(stack, font=(UI, 8, "bold"), bg=BG, fg=ACCENT, justify="center")
+        self.cap_uni.pack(pady=(int(4 * s), int(22 * s)))
+        ArrowButton(stack, "left", self.to_ansi, "outline", s=s).pack()
+        self.cap_ansi = tk.Label(stack, font=(UI, 8, "bold"), bg=BG, fg=ACCENT, justify="center")
+        self.cap_ansi.pack(pady=(int(4 * s), 0))
         self.uni.label.configure(text="Unicode")
         self.uni.hint.configure(text="Works everywhere: Facebook, Google, email")
 
         root.bind("<F5>", lambda e: self.to_unicode())
         root.bind("<F6>", lambda e: self.to_ansi())
         self.apply_encoding()
-        self.set_status("Paste text in a box and press a button below.     "
+        self.set_status("Paste text in a box and press ▶ or ◀ in the middle.     "
                         "Shortcuts: F5 → Unicode,  F6 → old font")
 
     def _card(self, parent, col, family, key):
         s = self.s
         card = tk.Frame(parent, bg=SURFACE, highlightthickness=1, highlightbackground=BORDER)
-        card.grid(row=0, column=col, sticky="nsew",
-                  padx=(0, int(6 * s)) if col == 0 else (int(6 * s), 0))
+        card.grid(row=0, column=col, sticky="nsew")
         head = tk.Frame(card, bg=SURFACE, padx=int(16 * s), pady=int(12 * s))
         head.pack(fill="x")
         titles = tk.Frame(head, bg=SURFACE)
@@ -378,8 +404,8 @@ class App:
                                      fg="#B45309")
         else:
             self.ansi.hint.configure(text=f"Old {enc} font text", fg=MUTED)
-        self.btn_uni.set_text(f"{enc}   →   Unicode")
-        self.btn_ansi.set_text(f"Unicode   →   {enc}")
+        self.cap_uni.configure(text=f"{enc}\n→ Unicode")
+        self.cap_ansi.configure(text=f"Unicode\n→ {enc}")
 
     # ------------------------------------------------------------- text actions
     def to_unicode(self):
@@ -488,18 +514,12 @@ class App:
         else:
             target = self.encoding.get()
             direction, label, found = "to_ansi", target, "Unicode"
-        base = os.path.splitext(os.path.basename(path))[0]
-        dst = filedialog.asksaveasfilename(
-            title=f"Save the {label} copy as  (your original file is not changed)",
-            defaultextension=".docx", initialfile=f"{base} ({label}).docx",
-            initialdir=os.path.dirname(path), filetypes=[("Word files", "*.docx")])
-        if not dst:
-            return
-        if not dst.lower().endswith(".docx"):  # never save or open anything but a Word file
-            dst += ".docx"
-        if os.path.normcase(os.path.abspath(dst)) == os.path.normcase(os.path.abspath(path)):
-            messagebox.showerror(APP_TITLE, "Please save with a different name so the original stays safe.")
-            return
+        # save next to the original as "<name> (<label>).docx", never over an existing file
+        folder, base = os.path.dirname(path), os.path.splitext(os.path.basename(path))[0]
+        dst, n = os.path.join(folder, f"{base} ({label}).docx"), 2
+        while os.path.exists(dst):
+            dst = os.path.join(folder, f"{base} ({label}) {n}.docx")
+            n += 1
         self.run_word_job(path, dst, direction, target, f"{found}  →  {label}")
 
     def run_word_job(self, src, dst, direction, target, route):
@@ -537,7 +557,8 @@ class App:
             elif "done" in result and elapsed >= MIN_BUSY_SECONDS:
                 self.set_status(f"✓  Word file saved: {os.path.basename(dst)}")
                 card.finish("Conversion complete",
-                            f"{result['done']} pieces of text converted.\nSaved as {os.path.basename(dst)}",
+                            f"{result['done']} pieces of text converted.\n"
+                            f"Saved in the same folder as the original:\n{os.path.basename(dst)}",
                             [("Open file", lambda: (card.close(), os.startfile(dst)), "primary"),
                              ("Show folder", lambda: (card.close(), os.startfile(os.path.dirname(dst))),
                               "ghost"),
